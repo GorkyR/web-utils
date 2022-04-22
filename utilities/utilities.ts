@@ -59,15 +59,16 @@ export function global_hotkey(keys: string | string[], callback: () => void): Re
 
 export function range(count: number): number[];
 export function range(start: number, end: number): number[];
-export function range(start_or_count: number, end?: number): number[] {
+export function range(start: number, end: number, step: number): number[];
+export function range(start_or_count: number, end?: number, step = 1): number[] {
    if (end === undefined) {
       end = start_or_count
       start_or_count = 0;
    }
-   const result: number[] = [];
-   for (let i = start_or_count; i < end; i++)
-      result.push(i);
-   return result;
+	const values = []
+	for (let i = start_or_count; i < end; i += step)
+		values.push(i)
+	return values
 }
 
 export function matches<T>(item: T, term: string): boolean {
