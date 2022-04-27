@@ -1,3 +1,79 @@
+export function distinct<T, K>(collection: T[], key?: (item: T) => K): T[] {
+	if (key)
+		return collection?.filter((item, index) => {
+			const item_key = key(item);
+			return collection.findIndex(i => key(i) == item_key) === index;
+		})
+	return collection?.filter((item, index) => collection.indexOf(item) === index);
+}
+
+export function group<T, K>(collection: T[], key: (item: T) => K): { key: K; items: T[] }[] {
+	const groups = new Map<K, T[]>();
+	for (let item of collection) {
+		const key_value = key(item);
+		if (groups.has(key_value))
+			groups.get(key_value)?.push(item);
+		else
+			groups.set(key_value, [item]);
+	}
+	return [...groups.entries()].map(([key, items]) => ({ key, items }));
+}
+
+export function chunk<T>(collection: T[], chunk_length: number): T[][] {
+	if (collection?.length <= chunk_length)
+		return [collection?.slice()];
+	const chunks: T[][] = [];
+	for (let i = 0; i < collection?.length; i += chunk_length)
+		chunks.push(collection?.slice(i, i + chunk_length));
+	return chunks;
+}
+
+export function split_into<T>(collection: T[], count: number): T[][] {
+	return chunk(collection, Math.ceil(collection?.length / count));
+}
+
+export function interspace<T>(collection: T[], interspaced_element: T): T[] {
+	if (!collection?.length)
+		return collection;
+	const interspaced = [collection[0]];
+	for (let element of collection.slice(1))
+		interspaced.concat([ interspaced_element, element ]);
+	return interspaced;
+}
+
+export function sample<T>(collection: T[]): T;
+export function sample<T>(collection: T[], count: number): T[];
+export function sample<T>(collection: T[], count?: number): T | T[] {
+	if (count !== undefined) {
+		collection = collection.slice();
+		const sampled: T[] = [];
+		while (sampled.length < count)
+			sampled.push(collection?.splice(random(0, collection?.length), 1)[0]);
+		return sampled;
+	}
+	return collection?.[random(0, collection?.length)];
+}
+
+export function sort_by<T, K>(collection: T[], key: (item: T) => K, ascending: boolean = true): T[] {
+	collection = collection?.slice();
+	return collection.sort((a, b) => {
+		const ka = key(a);
+		const kb = key(b);
+		if (ascending)
+			return <any>ka - <any>kb;
+		else
+			return <any>kb - <any>ka;
+	})
+}
+
+export function flatten<T>(collection: T[][]): T[] {
+	return collection?.reduce((flat, next) => flat.concat(next), []);
+}
+
+export function sum(collection: number[]): number {
+	return collection?.reduce((accumulator, number) => accumulator + number, 0) ?? 0;
+}
+
 export function random(lower_bound: number, upper_bound: number): number {
 	return Math.floor(lower_bound + Math.random() * (upper_bound - lower_bound + 1));
 }
@@ -95,8 +171,6 @@ export function matches<T>(item: T, term: string): boolean {
    }
 }
 
-
-
 export function debounce<F extends (...args: any[]) => void>(callback: F, delay_in_milliseconds: number): (...args: Parameters<F>) => void {
 	let timeout: any;
 	return (...args: Parameters<F>) => {
@@ -131,81 +205,20 @@ export function throttle<F extends (...args: any[]) => void>(callback: F, delay_
 	};
 }
 
-// -----------------------
-// --- ARRAY FUNCTIONS ---
-// =======================
-export function distinct<T, K>(collection: T[], key?: (item: T) => K): T[] {
-	if (key)
-		return collection?.filter((item, index) => {
-			const item_key = key(item);
-			return collection.findIndex(i => key(i) == item_key) === index;
-		})
-	return collection?.filter((item, index) => collection.indexOf(item) === index);
-}
-
-export function group<T, K>(collection: T[], key: (item: T) => K): { key: K; items: T[] }[] {
-	const groups = new Map<K, T[]>();
-	for (let item of collection) {
-		const key_value = key(item);
-		if (groups.has(key_value))
-			groups.get(key_value)?.push(item);
-		else
-			groups.set(key_value, [item]);
+const months_es = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre']
+export function format_date(date: Date | string | number, language: 'es' | 'en' = 'es'): string {
+	date = new Date(typeof date === 'string' && date.length <= 10? date+'T00:00' : date)
+	switch (language) {
+		case 'es':
+			return `${date.getDate()} de ${months_es[date.getMonth()]}, ${date.getFullYear()}`
+		case 'en':
+			// @TODO(Gorky)
+			return date.toDateString()
 	}
-	return [...groups.entries()].map(([key, items]) => ({ key, items }));
 }
-
-export function chunk<T>(collection: T[], chunk_length: number): T[][] {
-	if (collection?.length <= chunk_length)
-		return [collection?.slice()];
-	const chunks: T[][] = [];
-	for (let i = 0; i < collection?.length; i += chunk_length)
-		chunks.push(collection?.slice(i, i + chunk_length));
-	return chunks;
-}
-
-export function split_into<T>(collection: T[], count: number): T[][] {
-	return chunk(collection, Math.ceil(collection?.length / count));
-}
-
-export function interspace<T>(collection: T[], interspaced_element: T): T[] {
-	if (!collection?.length)
-		return collection;
-	const interspaced = [collection[0]];
-	for (let element of collection.slice(1))
-		interspaced.concat([ interspaced_element, element ]);
-	return interspaced;
-}
-
-export function sample<T>(collection: T[]): T;
-export function sample<T>(collection: T[], count: number): T[];
-export function sample<T>(collection: T[], count?: number): T | T[] {
-	if (count !== undefined) {
-		collection = collection.slice();
-		const sampled: T[] = [];
-		while (sampled.length < count)
-			sampled.push(collection?.splice(random(0, collection?.length), 1)[0]);
-		return sampled;
-	}
-	return collection?.[random(0, collection?.length)];
-}
-
-export function sort_by<T, K>(collection: T[], key: (item: T) => K, ascending: boolean = true): T[] {
-	collection = collection?.slice();
-	return collection.sort((a, b) => {
-		const ka = key(a);
-		const kb = key(b);
-		if (ascending)
-			return <any>ka - <any>kb;
-		else
-			return <any>kb - <any>ka;
-	})
-}
-
-export function flatten<T>(collection: T[][]): T[] {
-	return collection?.reduce((flat, next) => flat.concat(next), []);
-}
-
-export function sum(collection: number[]): number {
-	return collection?.reduce((accumulator, number) => accumulator + number, 0) ?? 0;
+export function format_datetime(date: Date | string | number, language: 'es' | 'en' = 'es'): string {
+	date = new Date(typeof date === 'string' && date.length <= 10? date+'T00:00' : date)
+	let hours = date.getHours()
+	hours = hours > 12? hours - 12 : hours == 0? 12 : hours
+	return `${hours.toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')} ${date.getHours() > 12? 'pm' : 'am'}, ${format_date(date, language)}`
 }
