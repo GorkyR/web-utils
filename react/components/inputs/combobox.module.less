@@ -1,0 +1,54 @@
+.combobox {
+	border: 1px solid rgba(0, 0, 0, .15);
+	padding-inline: .25rem;
+	// padding-block: 1px;
+	border-radius: .25rem;
+
+	position: relative;
+
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+
+	width: 100%;
+
+	& > input {
+		min-width: 0;
+		flex: 1 1 0%;
+
+		&::placeholder {
+			font-weight: 500;
+			color: rgba(0, 0, 0, .8);
+		}
+	}
+
+	& > svg {
+		cursor: pointer;
+		&:not(:first-child) {
+			margin-left: .25rem;
+		}
+	}
+
+	& > .items {
+		position: absolute;
+		top: 100%;
+		left: 0;
+		background-color: white;
+		min-width: 100%;
+		width: max-content;
+		box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
+
+		max-height: 200px;
+		overflow-y: auto;
+
+		& > .item {
+			cursor: pointer;
+			.selected {
+				background-color: rgba(0, 0, 0, .15);
+			}
+			.focused {
+				background-color: rgba(0, 0, 0, .1);
+			}
+		}
+	}
+}
