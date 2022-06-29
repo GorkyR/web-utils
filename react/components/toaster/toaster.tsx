@@ -1,9 +1,9 @@
-import styles from './toaster.module.css'
+import styles from './toaster.module.scss'
 
 import React, { useContext, useState } from "react"
-import { ContainerProperties } from "./containers/container.props"
-import { cx, swx } from "../utilities/react.utilities"
+import { ContainerProperties } from "../container.props"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
+import { cx, swx } from '../../utilities/react.utilities'
 
 type ToastType = 'success' | 'warning' | 'info' | 'error'
 type Toast = {

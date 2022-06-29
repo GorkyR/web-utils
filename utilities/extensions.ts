@@ -8,6 +8,7 @@ declare global {
 		interspace<E>(element: E): (T | E)[]
 		sample(): T
 		sample(count: number): T[]
+		shuffle(): T[]
 		sort_by<K>(key: (item: T) => K, ascending?: boolean): T[]
 		reversed(): T[]
 	}
@@ -15,6 +16,12 @@ declare global {
 	interface String {
 		reversed(): string
 		chunk(length: number, from_end?: boolean): string[]
+	}
+
+	interface Date {
+		add(time: { years?: number, months?: number, days?: number }): Date
+		set(time: { year?: number, month?: number, day?: number }): Date
+		toDate(): string
 	}
 }
 
@@ -65,15 +72,19 @@ function random(inclusive_upper_bound: number): number {
 	return Math.floor(Math.random() * (inclusive_upper_bound + 1))
 }
 
-Array.prototype.sample ??= function<T>(count?: number): T | T[] {
+Array.prototype.sample ??= function<T>(this: T[], count?: number): T | T[] {
 	if (count !== undefined) {
 		const result = this.slice()
 		const sampled: T[] = []
 		while (sampled.length < count)
-			sampled.push(result?.splice(random(result.length), 1)[0])
+			sampled.push(result.splice(random(result.length - 1), 1)[0])
 		return sampled
 	}
-	return this?.[random(this.length)]
+	return this[random(this.length - 1)]
+}
+
+Array.prototype.shuffle ??= function<T>(this: T[]): T[] {
+	return this.sample(this.length)
 }
 
 Array.prototype.sort_by ??= function<T, K>(this: T[], key: (item: T) => K, ascending = true): T[] {
@@ -100,6 +111,26 @@ String.prototype.chunk ??= function(this: string, length: number, from_end = fal
 	if (from_end)
 		return this.reversed().chunk(length).map(chunk => chunk.reversed()).reverse()
 	return [...this].chunk(length).map(chunk => chunk.join(''))
+}
+
+Date.prototype.add ??= function(this: Date, { years, months, days }: { years?: number, months?: number, days?: number }) {
+	let date = new Date(this)
+	if (years)  date.setFullYear(date.getFullYear() + years )
+	if (months) date.setMonth(   date.getMonth()    + months)
+	if (days)   date.setDate(    date.getDate()     + days  )
+	return date
+}
+
+Date.prototype.set ??= function(this: Date, { year, month, day }: { year?: number, month?: number, day?: number }) {
+	let date = new Date(this)
+	if (year  != null) date.setFullYear(year)
+	if (month != null) date.setMonth(month)
+	if (day   != null) date.setDate(day)
+	return date
+}
+
+Date.prototype.toDate ??= function(this: Date): string {
+	return `${this.getFullYear()}-${(this.getMonth() - 1).toString().padStart(2, '0')}-${this.getDate().toString().padStart(2, '0')}`
 }
 
 export {}

@@ -30,11 +30,15 @@ export function PageSizer({ name, fem, size, onChange, className }: PageSizerPro
 }
 
 
-function titlecase(text: string): string {
+function titlecase(text: string, language: 'es' = 'es'): string {
 	if (!text.trim().length) return ''
-	return text.trim().split(' ').filter(_ => _)
+	text = text.trim().split(' ').filter(_ => _)
 	.map(word => word[0].toUpperCase() + word.substring(1).toLowerCase())
 	.join(' ')
+	switch (language) {
+		case 'es': return text
+			.replaceAll(/ De /g, ' de ')
+	}
 }
 
 interface PaginatorProperties {
@@ -73,7 +77,7 @@ export function Paginator(props: PaginatorProperties) {
 		<div className={props.className} style={{ display: 'flex', flexDirection: 'row' }}>
 			<div style={{ flex: '1 1 0%' }}>
 				{ props.page_size
-				? `${titlecase(props.name)} ${props.page_size * page + 1}–${Math.min(props.page_size * (page + 1), props.count)}`
+				? `${titlecase(props.name)} ${props.page_size * page + 1}–${Math.min(props.page_size * (page + 1), props.count)} de ${props.count}`
 				: `${props.count} ${props.name}` }
 			</div>
 			{props.page_size? 
@@ -87,6 +91,7 @@ export function Paginator(props: PaginatorProperties) {
 				{pages().map(page => 
 					<button
 						key={page}
+						onClick={() => props.onChange?.(page)}
 						style={{...button_style, ...(props.page === page? selected_style : {})}}
 					>
 						{ page + 1 }
@@ -103,16 +108,16 @@ export function Paginator(props: PaginatorProperties) {
 	)
 }
 
-export function usePagination(name?: string, fem: boolean = false): [
+export function usePagination(count: number, name?: string, fem: boolean = false): [
 	React.FC<{ className?: string }>, 
-	React.FC<{ className?: string, count: number }>, 
+	React.FC<{ className?: string }>, 
 	{ start: number, end: number }
 ] {
 	const [pageSize, setPageSize] = useState(10)
 	const [page, setPage] = useState(0)
 	return [
 		({ className }) => <PageSizer className={className} name={name} fem={fem} size={pageSize} onChange={setPageSize}/>,
-		({ className, count }) => <Paginator className={className} name={name} page_size={pageSize} page={page} count={count} onChange={setPage}/>,
+		({ className }) => <Paginator className={className} name={name} page_size={pageSize} page={page} count={count} onChange={setPage}/>,
 		pageSize? { start: pageSize * page, end: pageSize * (page + 1) } : { start: 0, end: Number.POSITIVE_INFINITY }
 	]
 }

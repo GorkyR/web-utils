@@ -1,0 +1,16 @@
+.busy {
+	display: inline-block;
+	vertical-align: middle;
+	border-radius: 50%;
+	aspect-ratio: 1/1;
+	border-style: solid;
+	border-left-color: transparent;
+	border-right-color: transparent;
+	border-bottom-color: transparent;
+
+	@keyframes spin {
+		from { transform: rotate(0deg); }
+		to   { transform: rotate(360deg); }
+	}
+	animation: spin infinite linear;
+}

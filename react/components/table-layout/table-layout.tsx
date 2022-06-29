@@ -1,4 +1,4 @@
-import { ContainerProperties } from "./container.props"
+import { ContainerProperties } from "../container.props"
 
 export default function TableLayout({ className, children }: ContainerProperties) {
 	return (

@@ -1,5 +1,5 @@
 import { CSSProperties, MouseEvent, useRef, useState } from "react"
-import { ContainerProperties } from "./container.props"
+import { ContainerProperties } from "../container.props"
 
 const styles = {
 	container: {
@@ -19,9 +19,9 @@ const styles = {
 	}
 } as { [key: string]: CSSProperties }
 
-type ModalProperties = ContainerProperties & { onDismiss?: () => void }
+type ModalProperties = ContainerProperties & { backdropClassName?: string, backdropStyle?: CSSProperties , onDismiss?: () => void }
 
-export default function Modal({ className, children, onDismiss }: ModalProperties) {
+export default function Modal({ className, backdropClassName, style, backdropStyle, children, onDismiss }: ModalProperties) {
 	const container = useRef(null as HTMLDivElement | null)
 	const [mousedown, setMouseDown] = useState(null as HTMLElement | EventTarget | null)
 	const handle_dismiss = ({ target }: MouseEvent) => {
@@ -29,8 +29,8 @@ export default function Modal({ className, children, onDismiss }: ModalPropertie
 			onDismiss?.()
 	}
 	return (
-		<div ref={container} style={styles.container} onMouseDown={({ target }) => setMouseDown(target)} onMouseUp={handle_dismiss}>
-			<div style={styles.content} className={className}>
+		<div ref={container} className={backdropClassName} style={{...styles.container, ...(backdropStyle ?? {})}} onMouseDown={({ target }) => setMouseDown(target)} onMouseUp={handle_dismiss}>
+			<div style={{ ...styles.content, ...(style ?? {}) }} className={className}>
 				{children}
 			</div>
 		</div>

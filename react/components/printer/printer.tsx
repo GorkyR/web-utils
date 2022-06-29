@@ -1,5 +1,7 @@
 import React, { useContext, useEffect, useState } from "react";
-import { Child } from "./containers/container.props";
+import { Child } from "../container.props";
+
+import styles from './printer.module.scss'
 
 type PrintFunction = (content?: Child | Child[]) => void
 
@@ -13,16 +15,20 @@ export default function Printer({ children }: { children: Child | Child[] }) {
 	const [state, setState] = useState({ printing: false, content: null as Child | Child[] | null })
 	useEffect(() => {
 		if (!state.printing) return
+		const stamp = Date.now()
 		window.print()
-		setState({ printing: false, content: null })
+		setTimeout(() => setState({ printing: false, content: null }),
+			Date.now() - stamp <= 500? 10_000 : 0)
 	}, [state.printing])
 	function print(content?: Child | Child[]) {
 		setState({ printing: true, content })
 	}
 	return (
 		<PrinterContext.Provider value={{ print }}>
-			{state.content != null && state.content}
-			<section style={{ display: state.content? 'none' : undefined }}>
+			{state.content != null && <section className={styles.printable}>
+				{state.content}
+			</section>}
+			<section className={state.content != null && styles.non_printable}>
 				{children}
 			</section>
 		</PrinterContext.Provider>

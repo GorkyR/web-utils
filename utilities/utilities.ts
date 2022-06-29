@@ -41,17 +41,40 @@ export function interspace<T>(collection: T[], interspaced_element: T): T[] {
 	return interspaced;
 }
 
-export function sample<T>(collection: T[]): T;
-export function sample<T>(collection: T[], count: number): T[];
-export function sample<T>(collection: T[], count?: number): T | T[] {
-	if (count !== undefined) {
+function sample<T>(collection: T[]): T;
+function sample<T>(collection: T[], count: number): T[];
+function sample<T>(collection: T[], weighter: (item: T, index: number) => number): T;
+function sample<T>(collection: T[], count_or_weighter?: number | ((item: T, index: number) => number)): T | T[] {
+	if (count_or_weighter == undefined)
+		return collection[random(0, collection.length - 1)]
+	if (typeof count_or_weighter === 'function') {
+		const weighted_items = collection.map((item, index) => {
+			const weight = count_or_weighter(item, index)
+			if (weight < 0)
+				throw new Error('Weight cannot be negative')
+			return { item, weight }
+		})
+		const total_weight = sum(weighted_items.map(wi => wi.weight))
+		if (!total_weight) throw new Error('All weights cannot be 0')
+		const choice = random(0, total_weight - 1)
+		let i = 0
+		for (let wi of weighted_items) {
+			i += wi.weight
+			if (i > choice)
+				return wi.item
+		}
+		throw new Error('Unreachable')
+	} else {
 		collection = collection.slice();
 		const sampled: T[] = [];
-		while (sampled.length < count)
-			sampled.push(collection?.splice(random(0, collection?.length), 1)[0]);
+		while (sampled.length < count_or_weighter)
+			sampled.push(collection.splice(random(0, collection.length - 1), 1)[0]);
 		return sampled;
 	}
-	return collection?.[random(0, collection?.length)];
+}
+
+export function shuffle<T>(collection: T[]): T[] {
+	return sample(collection, collection.length)
 }
 
 export function sort_by<T, K>(collection: T[], key: (item: T) => K, ascending: boolean = true): T[] {
@@ -78,7 +101,14 @@ export function random(lower_bound: number, upper_bound: number): number {
 	return Math.floor(lower_bound + Math.random() * (upper_bound - lower_bound + 1));
 }
 
-export function create_element<K extends keyof HTMLElementTagNameMap>(tag_name: K, options: { 'class'?: string[] | string; text?: string } & { [attribute: string]: any }): HTMLElementTagNameMap[K] {
+export function create_element<K extends keyof HTMLElementTagNameMap>(
+	tag_name: K, 
+	options: {
+		'class'?: string[] | string
+		text?: string
+		style?: { [key in keyof CSSStyleDeclaration]?: CSSStyleDeclaration[key] }
+	} & { [attribute: string]: any }): HTMLElementTagNameMap[K] 
+{
 	const element = document.createElement(tag_name);
 	for (let attribute of Object.keys(options)) {
 		if (attribute == 'class') {
@@ -92,6 +122,11 @@ export function create_element<K extends keyof HTMLElementTagNameMap>(tag_name: 
 		}
 		if (attribute == 'text') {
 			element.textContent = options[attribute] as string;
+			continue;
+		}
+		if (attribute == 'style') {
+			for (let style in options[attribute])
+				element.style[style as any] = (options[attribute] as any)[style as any]
 			continue;
 		}
 		element.setAttribute(attribute, options[attribute]);
@@ -114,6 +149,7 @@ export function global_hotkey(keys: string | string[], callback: () => void): Re
 	keys = (typeof keys === 'string'
 		? keys.split('+').map(key => key.trim().toLowerCase())
 		: keys.map(key => key.toLowerCase()))
+	keys = keys.map(k => k === 'space'? ' ' : k)
 	const listener = (event: KeyboardEvent) => {
 		let { key, shiftKey, ctrlKey, altKey } = event
 		key = key.toLowerCase()
@@ -154,7 +190,7 @@ export function matches<T>(item: T, term: string): boolean {
    term = term.toLowerCase();
    switch (typeof item) {
       case 'string':
-         return item.toLowerCase().includes(term);
+         return item.toLowerCase().includes(term)
       case 'number': case 'bigint':
          let str = item.toString();
          if (!str.includes('.'))
@@ -206,19 +242,89 @@ export function throttle<F extends (...args: any[]) => void>(callback: F, delay_
 }
 
 const months_es = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre']
-export function format_date(date: Date | string | number, language: 'es' | 'en' = 'es'): string {
-	date = new Date(typeof date === 'string' && date.length <= 10? date+'T00:00' : date)
+export function format_date(datelike: Date | string | number, language: 'es' | 'en' = 'es'): string {
+	const date_ = date(datelike)
 	switch (language) {
 		case 'es':
-			return `${date.getDate()} de ${months_es[date.getMonth()]}, ${date.getFullYear()}`
+			return `${date_.getDate()} de ${months_es[date_.getMonth()]}, ${date_.getFullYear()}`
 		case 'en':
 			// @TODO(Gorky)
-			return date.toDateString()
+			return date_.toDateString()
 	}
 }
-export function format_datetime(date: Date | string | number, language: 'es' | 'en' = 'es'): string {
-	date = new Date(typeof date === 'string' && date.length <= 10? date+'T00:00' : date)
-	let hours = date.getHours()
+export function format_datetime(datelike: Date | string | number, language: 'es' | 'en' = 'es'): string {
+	const date_ = date(datelike)
+	let hours = date_.getHours()
 	hours = hours > 12? hours - 12 : hours == 0? 12 : hours
-	return `${hours.toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')} ${date.getHours() > 12? 'pm' : 'am'}, ${format_date(date, language)}`
+	return `${hours.toString().padStart(2, '0')}:${date_.getMinutes().toString().padStart(2, '0')} ${date_.getHours() > 12? 'pm' : 'am'}, ${format_date(date_, language)}`
+}
+
+export function date(datelike: Date | string | number): Date {
+	return new Date(typeof datelike === 'string' && datelike.length <= 10? datelike+'T00:00' : datelike)
+}
+
+export function date_add(datelike: Date | string | number, { years, months, days }: { years?: number, months?: number, days?: number }): Date {
+	let date_ = date(datelike)
+	if (years)  date_.setFullYear(date_.getFullYear() + years )
+	if (months) date_.setMonth(   date_.getMonth()    + months)
+	if (days)   date_.setDate(    date_.getDate()     + days  )
+	return date_
+}
+
+export async function export_file(contents: Blob | string, filename: string, mimetype: string): Promise<void> {
+	if (typeof contents === 'string')
+		contents = new Blob([contents], { type: mimetype })
+	const anchor = create_element('a', {
+		href: URL.createObjectURL(contents),
+		download: filename
+	})
+	document.body.appendChild(anchor)
+	anchor.click()
+	anchor.parentElement?.removeChild(anchor)
+}
+
+export async function export_text_file(contents: string, filename: string): Promise<void> {
+	const blob = new Blob([contents], { type: 'text/plain' })
+	const anchor = create_element('a', {
+		href: URL.createObjectURL(blob),
+		download: filename
+	})
+	document.body.appendChild(anchor)
+	anchor.click()
+	anchor.parentElement?.removeChild(anchor)
+}
+
+export function load_text_file(): Promise<string> {
+	return new Promise(resolve => {
+		const input = create_element('input', { type: 'file', style: { display: 'none' } })
+		input.oninput = () => {
+			const file = input.files![0]
+			const reader = new FileReader()
+			reader.onload = () => {
+				resolve(reader.result as string)
+			}
+			reader.readAsText(file)
+		}
+		document.body.appendChild(input)
+		input.click()
+	})
+}
+
+export function table_to_csv(table: { [key: string]: string | number }[]): string {
+	if (!table.length) return ''
+
+	function snake_case_to_capital(text: string): string {
+		const spaced = text.replaceAll(/_(.)/g, ' $1').toLowerCase().trim()
+		return spaced.length > 1? spaced[0].toUpperCase() + spaced.substring(1) : spaced.toUpperCase()
+	}
+
+	const headers = Object.keys(table[0])
+	const rows = table.map(item => headers
+		.map(h => item[h] ?? '')
+		.map(c => typeof c === 'string'? c.replaceAll(/,/g, '{;}') : String(c)))
+	return [headers.map(snake_case_to_capital)].concat(rows).map(r => r.join(',')).join('\n')
+}
+
+export function copy_to_clipboard(text: string) {
+	window.navigator.clipboard.writeText(text)
 }

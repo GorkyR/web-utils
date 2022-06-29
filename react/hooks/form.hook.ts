@@ -134,7 +134,7 @@ export function useForm<T>(config?: FormConfiguration<T>): FormControl<T> {
 				target.querySelectorAll('input').forEach(input => input.setCustomValidity(''))
 				return
 			}
-			if (config?.validate_native)
+			if (config?.validate_native ?? true)
 				Object.keys(errors).slice(0, 1).forEach(field_key => {
 					const field = target.querySelector(`[data-form-key="${field_key}"]`) as HTMLInputElement
 					field.setCustomValidity(errors[field_key])
@@ -194,4 +194,25 @@ function drill_into_path(data: any, path: (string | number)[], value: any) {
 		return array
 	}
 	return data
+}
+
+export function useField(config?: FormFieldConfiguration & { initial?: string | number | boolean, onChange?: (value: string | number | boolean) => void }) {
+	const [data, setData] = useState(config?.initial ?? '')
+	return {
+		value: (config?.type !== 'checkbox'? data : undefined) as string | number | undefined,
+		checked: (config?.type === 'checkbox'? data : undefined) as boolean | undefined,
+		type: config?.type ?? 'text',
+		min: config?.min, max: config?.max,
+		onChange: config?.type !== 'checkbox'
+			? ({ target: { value } }: any) => { 
+				value = config?.format?.(value) ?? value
+				setData(config?.type !== 'number'? value : Number(value))
+				config?.onChange?.(value)
+			} : () => {},
+		onClick: config?.type === 'checkbox'
+			? ({ target: { checked } }: any) => {
+				setData(checked)
+				config?.onChange?.(checked)
+			} : () => {}
+	}
 }
