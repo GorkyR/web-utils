@@ -13,10 +13,8 @@ export type StateData = Omit<{ [key in keyof typeof State]?: (typeof State)[key]
 const state = State as any
 for (let property in State) {
    const value = state[property]
-   if (typeof value == 'function') {
-      console.debug('function: ', property)
+   if (typeof value == 'function')
       continue;
-   }
    const sub_property = `_${property}`;
    Object.defineProperty(State, sub_property, { value, writable: true })
    Object.defineProperty(State, property, {
