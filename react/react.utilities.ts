@@ -1,10 +1,4 @@
-export function bind_methods<T>(obj: T) {
-	for (let prop in obj)
-		if (typeof obj[prop] === 'function')
-			obj[prop] = (<any>obj[prop]).bind(obj);
-}
-
-export function block_then(callback: () => void) {
+export function handle(callback: () => void) {
 	return (event: { preventDefault: () => void }) => {
 		event.preventDefault();
 		callback();
