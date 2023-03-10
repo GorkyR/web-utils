@@ -1,4 +1,4 @@
-import { Directive, ElementRef, HostListener, Input } from "@angular/core";
+import { Directive, ElementRef, HostListener, Input, Optional } from "@angular/core";
 import { NgModel } from "@angular/forms";
 
 @Directive({
@@ -6,7 +6,7 @@ import { NgModel } from "@angular/forms";
 })
 export class InputMaskerDirective {
 	private element: HTMLInputElement;
-	constructor(private eref: ElementRef, private model: NgModel) {
+	constructor(private eref: ElementRef, @Optional() private model: NgModel) {
 		this.element = eref.nativeElement;
 	}
 

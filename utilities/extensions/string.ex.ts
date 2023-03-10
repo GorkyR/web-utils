@@ -1,4 +1,4 @@
-export{}
+export {}
 declare global {
 	interface String {
 		reverse(): string
@@ -6,18 +6,19 @@ declare global {
 	}
 }
 
-String.prototype.reverse = function(): string {
-	return [ ...this ].reverse().join('')
+String.prototype.reverse ??= function (this: string): string {
+	return [...this].reverse().join('')
 }
 
 function chunk(collection: string[], length: number) {
 	const chunks: string[][] = []
-	for (let i = 0; i < collection.length; i += length)
-		chunks.push( collection.slice( i, i + length ) )
+	for (let i = 0; i < collection.length; i += length) chunks.push(collection.slice(i, i + length))
 	return chunks
 }
-String.prototype.chunk = function(length: number, from_end: boolean = false): string[] {
+String.prototype.chunk ??= function (this: string, length: number, from_end = false): string[] {
 	if (from_end)
-		return chunk([ ...this ].reverse(), length).reverse().map(t => t.reverse().join(''))
-	return chunk([ ...this ], length).map(t => t.join(''))
+		return chunk([...this].reverse(), length)
+			.reverse()
+			.map((t) => t.reverse().join(''))
+	return chunk([...this], length).map((t) => t.join(''))
 }
